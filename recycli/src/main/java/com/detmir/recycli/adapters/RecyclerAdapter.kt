@@ -55,6 +55,17 @@ open class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         bindRecyclerItems(infinityState.items)
     }
 
+    fun bindNestedState(items: List<RecyclerItem>) {
+        if (infinityCallbacks == null) {
+            throw Exception("You are trying to bind infinity state on non infinity adapter")
+        }
+        if (getCurrentList().isEmpty()) {
+            bindNestedRecyclerItems(items)
+        } else {
+            bindState(items)
+        }
+    }
+
     @Suppress("unused")
     fun bindAction(action: RecyclerAction?) {
         when (action) {
@@ -104,6 +115,17 @@ open class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         }
     }
 
+    private fun bindNestedRecyclerItems(items: List<RecyclerItem>) {
+        if (RecyclerGlobalConfig.useAsyncDiffer) {
+            differ.submitList(items)
+        } else {
+            combinedItems.addAll(items)
+        }
+        if (recyclerView?.adapter == null) {
+            recyclerView?.adapter = this
+        }
+    }
+
     @Suppress("unused")
     fun addFirstAppearanceListeners(firstAppearanceListeners: Map<String, FirstAppearanceListener>) {
         this.firstAppearanceListeners = firstAppearanceListeners.toMap()
@@ -111,7 +133,7 @@ open class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
-        viewType: Int
+        viewType: Int,
     ): RecyclerView.ViewHolder = recyclerBaseAdapter.onCreateViewHolder(parent, viewType)
 
     override fun getItemViewType(position: Int): Int = recyclerBaseAdapter.getItemViewType(position)
@@ -123,12 +145,12 @@ open class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     override fun onBindViewHolder(
         holder: RecyclerView.ViewHolder,
         position: Int,
-        payloads: MutableList<Any>
+        payloads: MutableList<Any>,
     ) = recyclerBaseAdapter.onBindViewHolder(holder, position, payloads)
 
     override fun onBindViewHolder(
         holder: RecyclerView.ViewHolder,
-        position: Int
+        position: Int,
     ) = recyclerBaseAdapter.onBindViewHolder(holder, position)
 
     override fun onViewDetachedFromWindow(holder: RecyclerView.ViewHolder) {
